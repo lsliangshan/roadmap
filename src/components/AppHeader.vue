@@ -126,8 +126,8 @@
         assets: this.$store.state.assets,
         eventHub: this.$store.state.eventHub,
         events: this.$store.state.events,
-        spanLeft: 6,
-        spanRight: 18
+        spanLeft: 4,
+        spanRight: 20
       }
     },
     computed: {

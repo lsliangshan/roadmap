@@ -1,12 +1,12 @@
 <template>
   <div class="developer_side_menu_container">
-    <Menu theme="dark" width="auto" class="main_menu_container" @on-select="navToPluginView" :active-name="`data-statistics`">
+    <Menu theme="dark" width="auto" class="main_menu_container" @on-select="navToPluginView" :active-name="`${mainMenu}-${subMenu}`">
       <Submenu name="data">
         <template slot="title">
           <Icon type="stats-bars"></Icon>
           数据管理
         </template>
-        <MenuItem name="statistics">数据统计</MenuItem>
+        <MenuItem name="data-statistics">数据统计</MenuItem>
       </Submenu>
     </Menu>
   </div>
@@ -36,16 +36,18 @@
       loginInfo () {
         return this.$store.state.loginInfo
       },
-      currentPlugin () {
-        return this.$route.params.pluginName
+      mainMenu () {
+        return this.$route.path.split('/')[1]
+      },
+      subMenu () {
+        return this.$route.path.split('/')[2]
       }
+    },
+    created () {
     },
     methods: {
       navToPluginView (e) {
-        try {
-          this.$store.state.loaders[this.contentRouterViewLoader].show()
-        } catch (err) {}
-        this.$router.replace(`/data/${e}`)
+        this.$router.replace(`/${e.split('-')[0]}/${e.split('-')[1]}`)
       }
     }
   }

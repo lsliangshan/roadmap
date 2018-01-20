@@ -46,8 +46,8 @@
       return {
         appName: this.$store.state.appName,
         assets: this.$store.state.assets,
-        spanLeft: 6,
-        spanRight: 18
+        spanLeft: 4,
+        spanRight: 20
       }
     },
     computed: {
