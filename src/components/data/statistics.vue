@@ -1,14 +1,20 @@
 <template>
     <div class="data_statistics_container">
       <div class="data_statistics_wrapper">
-        <Tabs :value="results[currentIndex].name" style="height: 100%;">
-          <TabPane v-for="(item, index) in results" :key="index" :label="item.name" :name="item.name">
+        <Tabs :value="results[currentIndex].group" @on-click="tabChanged" style="height: 100%;">
+          <TabPane v-for="(item, index) in results" :key="index" :label="item.group" :name="item.group">
             <div class="screen_conditions_container">
               <Form :label-width="80">
                 <FormItem label="查询时间">
                   <DatePicker type="datetimerange" :options="searchTimeTags" format="yyyy-MM-dd HH:mm" placeholder="请选择查询起止时间" @on-change="searchTimeChanged" style="width: 300px"></DatePicker>
                 </FormItem>
               </Form>
+              <div class="export_xlsx_container">
+                <Button type="primary" size="small" :loading="exportXlsxLoading" @click="exportXlsx">
+                  <span v-if="!exportXlsxLoading">导出xlsx</span>
+                  <span v-else>导出中...</span>
+                </Button>
+              </div>
             </div>
             <!--<div class="screen_conditions_toggle">-->
               <!--<p class="screen_conditions_toggle_text" @click="toggleScreenCondition">-->
@@ -16,7 +22,7 @@
                 <!--<Icon class="arrow_down" :type="showScreenConditions ? 'ios-arrow-up' : 'ios-arrow-down'"></Icon>-->
               <!--</p>-->
             <!--</div>-->
-            <Table border :columns="userKeys" :data="item.children" :stripe="true"></Table>
+            <Table border :columns="userKeys" :data="item.interFaces" :stripe="true"></Table>
           </TabPane>
         </Tabs>
       </div>
@@ -37,6 +43,7 @@
     background-color: #ffffff;
   }
   .screen_conditions_container {
+    position: relative;
     width: 100%;
     height: 48px;
     -webkit-transition: all .3s ease-in-out;
@@ -61,8 +68,19 @@
   .arrow_down {
     margin-left: 5px;
   }
+  .export_xlsx_container {
+    width: 100px;
+    height: 32px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
 </style>
 <script>
+  import XLSX from 'xlsx'
   export default {
     name: 'statistics',
     data () {
@@ -71,6 +89,7 @@
           startTime: '',
           endTime: ''
         },
+        exportXlsxLoading: false,
         searchTimeTags: {
           shortcuts: [
             {
@@ -113,78 +132,34 @@
         currentIndex: 0,
         results: [
           {
-            name: 'm站',
-            children: [
+            'group': 'mi',
+            'interFaces': [
               {
-                name: '注册',
-                total: 23161,
-                oneThree: 250,
-                threeFive: 443,
-                moreThanFive: 13,
-                oneThreePercent: 1,
-                threeFivePercent: 2,
-                moreThanFivePercent: 0,
-                url: 'My/RegisterPassport'
-              },
-              {
-                name: '登录',
-                total: 366397,
-                oneThree: 1031,
-                threeFive: 842,
-                moreThanFive: 209,
-                oneThreePercent: 0,
-                threeFivePercent: 0,
-                moreThanFivePercent: 0,
-                url: 'My/LoginPostPassport'
-              },
-              {
-                name: '第三方注册、登录',
-                total: 23946,
-                oneThree: 184,
-                threeFive: 283,
-                moreThanFive: 17,
-                oneThreePercent: 1,
-                threeFivePercent: 1,
-                moreThanFivePercent: 0,
-                url: 'My/CreateOrValidUserByOAuth'
+                'fivePlusRequests': 1284,
+                'fivePlusRequestsPercent': '1.04%',
+                'name': '灰度项目信息',
+                'oneThreeRequests': 3192,
+                'oneThreeRequestsPercent': '2.59%',
+                'threeFiveRequests': 785,
+                'threeFiveRequestsPercent': '0.64%',
+                'totalRequests': 12323136,
+                'urlPath': 'https://mi.zhaopin.com/android/myext/GetGrayscaleProjectInfo'
               }
             ]
           },
           {
-            name: 'Mi',
-            children: [
+            'group': 'm站',
+            'interFaces': [
               {
-                name: '获取个人信息',
-                total: 11133987,
-                oneThree: 16620,
-                threeFive: 16137,
-                moreThanFive: 5136,
-                oneThreePercent: 0,
-                threeFivePercent: 0,
-                moreThanFivePercent: 0,
-                url: 'My/GetUserDetail'
-              },
-              {
-                name: '获取我的关注收藏',
-                total: 3610774,
-                oneThree: 7015,
-                threeFive: 5018,
-                moreThanFive: 2377,
-                oneThreePercent: 0,
-                threeFivePercent: 0,
-                moreThanFivePercent: 0,
-                url: 'My/GetUserSavedInfo'
-              },
-              {
-                name: '搜索',
-                total: 10308047,
-                oneThree: 478349,
-                threeFive: 37771,
-                moreThanFive: 7849,
-                oneThreePercent: 5,
-                threeFivePercent: 0,
-                moreThanFivePercent: 0,
-                url: 'My/Search'
+                'fivePlusRequests': 3,
+                'fivePlusRequestsPercent': '0.02%',
+                'name': 'js资源获取',
+                'oneThreeRequests': 18,
+                'oneThreeRequestsPercent': '0.15%',
+                'threeFiveRequests': 13,
+                'threeFiveRequestsPercent': '0.11%',
+                'totalRequests': 1215372,
+                'urlPath': 'https://m.zhaopin.com/Scripts/raty/jquery.raty.js'
               }
             ]
           }
@@ -197,38 +172,45 @@
           },
           {
             title: '总请求',
-            key: 'total'
+            key: 'totalRequests'
           },
           {
             title: '1-3秒',
-            key: 'oneThree'
+            key: 'oneThreeRequests'
           },
           {
             title: '3-5秒',
-            key: 'threeFive'
+            key: 'threeFiveRequests'
           },
           {
             title: '大于5秒',
-            key: 'moreThanFive'
+            key: 'fivePlusRequests'
           },
           {
             title: '1-3秒比例',
-            key: 'oneThreePercent'
+            key: 'oneThreeRequestsPercent'
           },
           {
             title: '3-5秒比例',
-            key: 'threeFivePercent'
+            key: 'threeFiveRequestsPercent'
           },
           {
             title: '大于5秒比例',
-            key: 'moreThanFivePercent'
+            key: 'fivePlusRequestsPercent'
           },
           {
             title: '请求地址',
-            key: 'url',
+            key: 'urlPath',
             width: 200
           }
-        ]
+        ],
+        xlsxKey: {},
+        xlsxData: [],
+        xlsxOpts: {
+          bookType: 'xlsx',
+          bookSST: false,
+          type: 'binary'
+        }
       }
     },
     computed: {
@@ -236,13 +218,86 @@
         return this.$store.state.loginInfo
       }
     },
+    created () {
+      this.formatXlsxData()
+    },
     methods: {
+      tabChanged (evt) {
+        let outIndex = this.currentIndex
+        let i = 0
+        for (i; i < this.results.length; i++) {
+          if (this.results[i].group === evt) {
+            outIndex = i
+            i = this.results.length
+          }
+        }
+        this.currentIndex = outIndex
+      },
       toggleScreenCondition () {
         this.showScreenConditions = !this.showScreenConditions
       },
       searchTimeChanged (evt) {
         this.screenConditions.startTime = evt[0]
         this.screenConditions.endTime = evt[1]
+      },
+      exportXlsx () {
+        this.exportXlsxLoading = true
+        this.formatXlsxData()
+        let wb = {SheetNames: ['Sheet1'], Sheets: {}, Props: {}}
+        wb.Sheets['Sheet1'] = XLSX.utils.json_to_sheet(this.xlsxData)
+        this.saveAs(new Blob([this.s2ab(XLSX.write(wb, this.xlsxOpts))], {type: 'application/octet-stream'}), this.results[this.currentIndex].group + '-数据报表.' + (String(this.xlsxOpts.bookType) === 'biff2' ? 'xls' : this.xlsxOpts.bookType))
+        setTimeout(() => {
+          this.exportXlsxLoading = false
+        }, 800)
+      },
+      getXlsxKey () {
+        let userKeys = JSON.parse(JSON.stringify(this.userKeys))
+        let i = 0
+        let outKey = {}
+        for (i; i < userKeys.length; i++) {
+          if (!outKey[userKeys[i].title]) {
+            outKey[userKeys[i].title] = userKeys[i].key
+          }
+        }
+        this.xlsxKey = outKey
+      },
+      formatXlsxData () {
+        let _originData = JSON.parse(JSON.stringify(this.results[this.currentIndex].interFaces))
+        this.getXlsxKey()
+        let i = 0
+        let outData = []
+        for (i; i < _originData.length; i++) {
+          let tempData = JSON.parse(JSON.stringify(this.xlsxKey))
+          // for (let k in tempData) {
+          //   tempData[k] = _originData[i][tempData[k]]
+          // }
+          Object.keys(tempData).forEach((item) => {
+            tempData[item] = _originData[i][tempData[item]]
+          })
+          outData.push(tempData)
+        }
+        this.xlsxData = outData
+      },
+      saveAs (obj, fileName) {
+        let tempa = document.createElement('a')
+        tempa.download = fileName || '数据报表'
+        tempa.href = URL.createObjectURL(obj)
+        tempa.click()
+        setTimeout(() => {
+          URL.revokeObjectURL(obj)
+        }, 100)
+      },
+      s2ab (s) {
+        if (typeof ArrayBuffer !== 'undefined') {
+          let buf = new ArrayBuffer(s.length)
+          let view = new Uint8Array(buf)
+          for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF
+          return buf
+        } else {
+          let buf = new Array(s.length)
+          for (let i = 0; i !== s.length; ++i) buf[i] = s.charCodeAt(i) & 0xFF
+          return buf
+        }
       }
     },
     components: {}
